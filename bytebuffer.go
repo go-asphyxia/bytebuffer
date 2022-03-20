@@ -13,92 +13,93 @@ type (
 	}
 )
 
-func (b *ByteBuffer) Clone() (target *ByteBuffer) {
-	target = &ByteBuffer{}
-
-	if b.Bytes != nil {
-		target.Bytes = append(target.Bytes, b.Bytes...)
+func (bb *ByteBuffer) Clone() (target *ByteBuffer) {
+	target = &ByteBuffer{
+		Bytes: make([]byte, len(bb.Bytes)),
 	}
 
+	copy(target.Bytes, bb.Bytes)
 	return
 }
 
-func (b *ByteBuffer) Grow(n int) {
-	s := len(b.Bytes) + n
+func (bb *ByteBuffer) Grow(n int) {
+	s := len(bb.Bytes) + n
 
-	if s <= cap(b.Bytes) {
-		b.Bytes = b.Bytes[:s]
+	if s <= cap(bb.Bytes) {
+		bb.Bytes = bb.Bytes[:s]
 		return
 	}
 
 	temp := make([]byte, s)
-	copy(temp, b.Bytes)
+	copy(temp, bb.Bytes)
 
-	b.Bytes = temp
+	bb.Bytes = temp
 }
 
-func (b *ByteBuffer) Clip(n int) {
-	b.Bytes = b.Bytes[:len(b.Bytes)-n]
+func (bb *ByteBuffer) Clip(n int) {
+	bb.Bytes = bb.Bytes[:len(bb.Bytes)-n]
 }
 
-func (b *ByteBuffer) Reset() {
-	b.Bytes = b.Bytes[:0]
+func (bb *ByteBuffer) Reset() {
+	bb.Bytes = bb.Bytes[:0]
 }
 
-func (b *ByteBuffer) Close() (err error) {
-	b = nil
+func (bb *ByteBuffer) Close() (err error) {
+	bb.Bytes = nil
 	return
 }
 
-func (b *ByteBuffer) Copy() (target []byte) {
-	target = append(target, b.Bytes...)
+func (bb *ByteBuffer) Copy() (target []byte) {
+	target = make([]byte, len(bb.Bytes))
+
+	copy(target, bb.Bytes)
 	return
 }
 
-func (b *ByteBuffer) StringNoCopy() (target string) {
-	target = aconversion.BytesToStringNoCopy(b.Bytes)
+func (bb *ByteBuffer) StringNoCopy() (target string) {
+	target = aconversion.BytesToStringNoCopy(bb.Bytes)
 	return
 }
 
-func (b *ByteBuffer) Set(source []byte) {
-	b.Bytes = append(b.Bytes[:0], source...)
+func (bb *ByteBuffer) Set(source []byte) {
+	bb.Bytes = append(bb.Bytes[:0], source...)
 }
 
-func (b *ByteBuffer) SetString(source string) {
-	b.Bytes = append(b.Bytes[:0], source...)
+func (bb *ByteBuffer) SetString(source string) {
+	bb.Bytes = append(bb.Bytes[:0], source...)
 }
 
-func (b *ByteBuffer) Write(source []byte) (n int, err error) {
+func (bb *ByteBuffer) Write(source []byte) (n int, err error) {
 	n = len(source)
 
-	b.Bytes = append(b.Bytes, source...)
+	bb.Bytes = append(bb.Bytes, source...)
 	return
 }
 
-func (b *ByteBuffer) WriteByte(source byte) (err error) {
-	b.Bytes = append(b.Bytes, source)
+func (bb *ByteBuffer) WriteByte(source byte) (err error) {
+	bb.Bytes = append(bb.Bytes, source)
 	return
 }
 
-func (b *ByteBuffer) WriteRune(source rune) (n int, err error) {
+func (bb *ByteBuffer) WriteRune(source rune) (n int, err error) {
 	temp := make([]byte, utf8.UTFMax)
 
 	n = utf8.EncodeRune(temp, source)
 
-	b.Bytes = append(b.Bytes, temp[:n]...)
+	bb.Bytes = append(bb.Bytes, temp[:n]...)
 	return
 }
 
-func (b *ByteBuffer) WriteString(source string) (n int, err error) {
+func (bb *ByteBuffer) WriteString(source string) (n int, err error) {
 	n = len(source)
 
-	b.Bytes = append(b.Bytes, source...)
+	bb.Bytes = append(bb.Bytes, source...)
 	return
 }
 
-func (b *ByteBuffer) ReadFrom(source io.Reader) (n int64, err error) {
-	l := len(b.Bytes)
-	c := cap(b.Bytes)
+func (bb *ByteBuffer) ReadFrom(source io.Reader) (n int64, err error) {
+	l := len(bb.Bytes)
+	c := cap(bb.Bytes)
 	r := 0
 
 	for {
@@ -106,17 +107,17 @@ func (b *ByteBuffer) ReadFrom(source io.Reader) (n int64, err error) {
 			c = (c + 16) * 2
 
 			temp := make([]byte, c)
-			copy(temp, b.Bytes)
+			copy(temp, bb.Bytes)
 
-			b.Bytes = temp
+			bb.Bytes = temp
 		}
 
-		r, err = source.Read(b.Bytes[l:c])
+		r, err = source.Read(bb.Bytes[l:c])
 
 		n += int64(r)
 		l += r
 
-		b.Bytes = b.Bytes[:l]
+		bb.Bytes = bb.Bytes[:l]
 
 		if err != nil || l < c {
 			if err == io.EOF {
